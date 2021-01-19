@@ -5,9 +5,13 @@ on:
   - pull_request
 
 jobs:
-  phpunit:
-    name: "PHP 7.4 (windows-latest)"
-    runs-on: windows-latest
+  settings:
+    name: Collect settings
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.versions.outputs.value }}
+      extensions: ${{ steps.extensions.outputs.value }}
+      skipped: ${{ steps.skipped.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -15,7 +19,55 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 7.4
-          extensions: dom,intl,json,xml,libxml,xmlreader
+      - name: Install symplify/easy-ci
+        run: |
+          composer require symplify/easy-ci
+      - name: Detect PHP versions
+        id: versions
+        run: |
+          echo "::set-output name=value::$(vendor/bin/easy-ci php-versions-json)"
+      - name: Detect PHP extensions
+        id: extensions
+        run: |
+          echo "::set-output name=value::$(composer check-platform-reqs | cut -d" " -f1 | grep "ext-" | sed 's/^ext-//g' | paste -sd ",")"
+      - name: Detect composer.lock
+        id: skipped
+        run: |
+          echo "::set-output name=value::$([ -f "composer.lock" ] || echo "locked")"
+
+  phpunit:
+    name: "PHP ${{ matrix.php }} (${{ matrix.os }} / ${{ matrix.dependencies }})"
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.beta }}
+    needs:
+      - settings
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+#          - windows-latest
+        beta:
+          - false
+        php: "${{ needs.settings.outputs.versions }}"
+        dependencies:
+          - locked
+          - highest
+          - lowest
+
+        exclude:
+          - dependencies: "${{ needs.settings.outputs.skipped }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ${{ needs.settings.outputs.extensions }}
       - name: Install dependencies
         uses: "ramsey/composer-install@v1"
         with:

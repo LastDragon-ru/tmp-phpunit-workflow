@@ -21,8 +21,7 @@ jobs:
           php-version: 7.4
       - name: Install symplify/easy-ci
         run: |
-          rm composer.json
-          composer require --no-interaction symplify/easy-ci
+          composer require --no-interaction --ignore-platform-reqs symplify/easy-ci
       - name: Detect PHP versions
         id: versions
         run: |

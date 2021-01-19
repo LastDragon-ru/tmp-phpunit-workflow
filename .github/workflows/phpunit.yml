@@ -21,7 +21,8 @@ jobs:
           php-version: 7.4
       - name: Install symplify/easy-ci
         run: |
-          composer require symplify/easy-ci
+          rm composer.json
+          composer require --no-interaction symplify/easy-ci
       - name: Detect PHP versions
         id: versions
         run: |
@@ -51,14 +52,14 @@ jobs:
 #          - windows-latest
         beta:
           - false
-        php: ${{ needs.settings.outputs.versions }}
+        php: ${{ fromJson(needs.settings.outputs.versions) }}
         dependencies:
           - locked
           - highest
           - lowest
 
         exclude:
-          - dependencies: "${{ needs.settings.outputs.skipped }}"
+          - dependencies: ${{ needs.settings.outputs.skipped }}
 
     steps:
       - name: Checkout

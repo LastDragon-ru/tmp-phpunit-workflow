@@ -25,7 +25,7 @@ jobs:
 
   phpunit:
     name: "PHP ${{ matrix.php }} (${{ matrix.os }} / ${{ matrix.dependencies }})"
-    if: ${{ matrix.dependencies == 'locked' && needs.settings.outputs.lock }}
+    #if: ${{ matrix.dependencies == 'locked' && needs.settings.outputs.lock }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.beta }}
 
@@ -44,15 +44,15 @@ jobs:
           - 7.4
           #- 8.0
         dependencies:
-#          - locked
+          #          - locked
           - highest
-#          - lowest
+    #          - lowest
 
-#        include:
-#          - os: ubuntu-latest
-#            beta: true
-#            php: 8.1
-#            dependencies: highest
+    #        include:
+    #          - os: ubuntu-latest
+    #            beta: true
+    #            php: 8.1
+    #            dependencies: highest
 
     steps:
       - name: Checkout

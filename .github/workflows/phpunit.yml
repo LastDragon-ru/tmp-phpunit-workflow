@@ -48,7 +48,7 @@ jobs:
     #          - lowest
 
         exclude:
-          dependencies: ${{ needs.settings.outputs.skipped }}
+          dependencies: "locked"
 
     #        include:
     #          - os: ubuntu-latest

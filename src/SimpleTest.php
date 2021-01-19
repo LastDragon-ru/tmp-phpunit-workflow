@@ -2,6 +2,6 @@
 
 class SimpleTest extends \PHPUnit\Framework\TestCase  {
     public function testSimple() {
-        $this->assertTrue(true);
+        $this->assertTrue(false);
     }
 }

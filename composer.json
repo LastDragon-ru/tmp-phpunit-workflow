@@ -1,7 +1,8 @@
 {
-    "name": "vagrant/tmp-phpunit-workflow",
-    "type": "library",
-    "require": {
-        "phpunit/phpunit": "^9.5.0"
-    }
+  "name": "vagrant/tmp-phpunit-workflow",
+  "type": "library",
+  "require": {
+    "ext-intl": "*",
+    "phpunit/phpunit": "^9.5.0"
+  }
 }

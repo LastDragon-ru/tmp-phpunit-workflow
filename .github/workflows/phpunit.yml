@@ -51,7 +51,7 @@ jobs:
 #          - windows-latest
         beta:
           - false
-        php: "${{ needs.settings.outputs.versions }}"
+        php: ${{ needs.settings.outputs.versions }}
         dependencies:
           - locked
           - highest

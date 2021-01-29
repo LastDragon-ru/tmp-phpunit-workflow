@@ -1,8 +1,12 @@
 name: PHPUnit
 
 on:
+  push:
+    branches:
+      - '**'
+  pull_request:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 0 */7 * *"
 
 jobs:
   settings:
@@ -19,8 +23,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: 7.4
-      - run: echo "$GITHUB_EVENT_NAME"
-      - run: echo "$(if [ ! "$GITHUB_EVENT_NAME" == "schedule" ]; then echo "lowest"; fi)"
       - name: Detect dependencies versions
         id: dependencies
         run: |
@@ -37,16 +39,52 @@ jobs:
       - name: Detect PHP extensions
         id: extensions
         run: |
-          echo "::set-output name=value::$(jq '[.require, ."require-dev", .suggest] | add | to_entries | map(select(.key | match("ext-";"i"))) | map(.key | sub("ext-"; "")) | join(", ")' -r -c composer.json)"
+          echo "::set-output name=value::$(jq '[.require, ."require-dev", .suggest] | add | to_entries | map(select(.key | match("ext-";"i"))) | map(.key | sub("ext-"; "")) | join(" ")' -r -c composer.json)"
 
   phpunit:
-    name: "Output"
+    name: "PHP ${{ matrix.php }} (${{ matrix.os }} / ${{ matrix.dependencies }})"
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.beta }}
     needs:
       - settings
 
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+        beta:
+          - false
+        php: ${{ fromJson(needs.settings.outputs.versions) }}
+        dependencies: ${{ fromJson(needs.settings.outputs.dependencies) }}
+
     steps:
-      - run: echo "${{ needs.settings.outputs.versions }}"
-      - run: echo "${{ needs.settings.outputs.extensions }}"
-      - run: echo "${{ needs.settings.outputs.dependencies }}"
+      - name: Checkout
+        uses: actions/checkout@v2
+      - if: ${{ matrix.dependencies == 'locked' }}
+        name: Install PHP & Dependencies (locked)
+        uses: php-actions/composer@v5
+        with:
+          command: install
+          php_version: ${{ matrix.php }}
+          php_extensions: ${{ needs.settings.outputs.extensions }}
+      - if: ${{ matrix.dependencies == 'highest' }}
+        name: Install PHP & Dependencies (highest)
+        uses: php-actions/composer@v5
+        with:
+          command: update
+          php_version: ${{ matrix.php }}
+          php_extensions: ${{ needs.settings.outputs.extensions }}
+      - if: ${{ matrix.dependencies == 'lowest' }}
+        name: Install PHP & Dependencies (lowest)
+        uses: php-actions/composer@v5
+        with:
+          command: update
+          args: --prefer-lowest
+          php_version: ${{ matrix.php }}
+          php_extensions: ${{ needs.settings.outputs.extensions }}
+      - name: Execute
+        run: |
+          vendor/bin/phpunit
